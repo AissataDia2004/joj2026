@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>EcoJOJ 2026 — Dakar Propre</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --g:#00853F;--g2:#00692F;--g3:#E6F5EC;--g4:#C8EDD8;
+  --y:#FDEF42;--y2:#C9BB00;--y3:#FFFDE6;
+  --r:#E31E24;--r2:#B01519;--r3:#FDEAEA;
+  --dark:#111310;--mid:#3A3D38;--soft:#6E7269;--pale:#F2F2ED;--white:#FFFFFF;
+  --border:#E0E0D6;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-md:0 4px 24px rgba(0,0,0,.12);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--pale);color:var(--dark);overflow-x:hidden;min-height:100vh}
+.app{max-width:430px;margin:0 auto;background:var(--white);min-height:100vh;position:relative;overflow:hidden;display:flex;flex-direction:column}
+
+/* ─── SPLASH ─── */
+#v-splash{background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:36px 24px 40px;text-align:center;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.splash-logo-ring{width:100px;height:100px;margin:0 auto 20px;position:relative}
+.splash-logo-ring svg{width:100%;height:100%}
+.splash-title{font-family:'Bebas Neue',sans-serif;font-size:58px;color:var(--y);letter-spacing:4px;line-height:.95}
+.splash-sub{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:2.5px;text-transform:uppercase;margin:8px 0 40px}
+.splash-roles-label{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;width:100%}
+.btn-role{width:100%;padding:15px 18px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:transform .15s,opacity .2s;text-align:left}
+.btn-role:hover{transform:translateY(-1px);opacity:.93}
+.btn-role .role-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-role .role-text{flex:1}
+.btn-role .role-text strong{display:block;font-size:15px}
+.btn-role .role-text span{font-size:11px;opacity:.65}
+.btn-g{background:var(--g);color:white}
+.btn-g .role-icon{background:rgba(255,255,255,.15)}
+.btn-y{background:var(--y);color:var(--dark)}
+.btn-y .role-icon{background:rgba(0,0,0,.1)}
+.btn-r{background:var(--r);color:white}
+.btn-r .role-icon{background:rgba(255,255,255,.15)}
+.btn-role .qr-pill-sm{background:rgba(255,255,255,.18);border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;white-space:nowrap;margin-left:auto}
+.btn-y .qr-pill-sm{background:rgba(0,0,0,.12)}
+.splash-flag{display:flex;height:5px;width:100%;border-radius:3px;overflow:hidden;margin-top:28px}
+.rf-g{flex:1;background:var(--g)}.rf-y{flex:1;background:var(--y)}.rf-r{flex:1;background:var(--r)}
+
+/* ─── ONBOARDING ─── */
+#v-role{min-height:100vh;display:none;flex-direction:column;animation:slideUp .3s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.role-header{background:var(--dark);padding:28px 22px 20px;text-align:center}
+.role-header h1{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--y);letter-spacing:2px}
+.role-header p{font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;text-transform:uppercase;letter-spacing:1.5px}
+.role-flag{display:flex;height:4px}
+.role-body{flex:1;padding:22px 20px;background:var(--pale)}
+.role-preview{background:white;border-radius:18px;padding:18px;margin-bottom:16px;border:1.5px solid var(--border)}
+.role-preview-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.role-dot{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.role-preview-title{font-size:16px;font-weight:700}
+.role-preview-sub{font-size:12px;color:var(--soft);line-height:1.55}
+.qr-pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;margin-top:8px}
+.qr-g{background:var(--g3);color:var(--g2)}.qr-r{background:var(--r3);color:var(--r2)}.qr-y{background:var(--y3);color:var(--y2)}
+.form-field{margin-bottom:13px}
+.form-field label{font-size:11px;font-weight:700;color:var(--mid);display:block;margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
+.form-field input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;background:white;transition:border-color .2s;color:var(--dark)}
+.form-field input:focus{border-color:var(--g)}
+.btn-primary{width:100%;background:var(--g);color:white;border:none;border-radius:14px;padding:15px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;margin-top:4px;transition:opacity .2s}
+.btn-primary:hover{opacity:.9}
+.btn-skip{background:none;border:none;font-size:12px;color:var(--soft);text-decoration:underline;cursor:pointer;width:100%;text-align:center;margin-top:10px;font-family:'DM Sans',sans-serif}
+
+/* ─── APP SHELL ─── */
+#v-app{display:none;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--dark);position:sticky;top:0;z-index:200;gap:12px}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--y);letter-spacing:2px;flex-shrink:0}
+.topbar-center{flex:1;text-align:center}
+.topbar-role{border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.role-spectateur{background:var(--g);color:white}
+.role-superviseur{background:var(--y);color:var(--dark)}
+.role-prestataire{background:var(--r);color:white}
+.topbar-notif{width:34px;height:34px;background:rgba(255,255,255,.08);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0}
+.notif-dot{width:7px;height:7px;background:var(--r);border-radius:50%;position:absolute;top:7px;right:7px;border:1.5px solid var(--dark)}
+.ticker{background:var(--r);padding:7px 0;overflow:hidden;white-space:nowrap}
+.ticker-inner{display:inline-block;animation:ticker 20s linear infinite;font-family:'Bebas Neue',sans-serif;font-size:12px;color:white;letter-spacing:2px}
+@keyframes ticker{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
+.pages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.pg{display:none;padding-bottom:84px}
+.pg.on{display:block}
+
+/* ─── BOTTOM NAV ─── */
+.bot-nav{background:white;border-top:1.5px solid var(--border);display:flex;justify-content:space-around;padding:10px 4px 18px;position:sticky;bottom:0;z-index:200}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 14px;border-radius:12px;transition:background .15s}
+.bn-item.on{background:var(--g3)}
+.bn-item svg{width:22px;height:22px}
+.bn-item span{font-size:10px;font-weight:700;letter-spacing:.3px}
+.bn-item.on span{color:var(--g)}
+.bn-item:not(.on) span{color:var(--soft)}
+.bn-item:not(.on) svg{opacity:.4}
+
+/* ─── HERO ─── */
+.hero{background:var(--dark);padding:22px 18px 26px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;right:-50px;top:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(253,239,66,.06) 0%,transparent 70%);pointer-events:none}
+.hero-label{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:4px}
+.hero-pts{font-family:'Bebas Neue',sans-serif;font-size:64px;color:var(--y);line-height:.95;letter-spacing:2px}
+.hero-pts-sub{font-size:12px;color:rgba(255,255,255,.4);margin-top:5px;display:flex;align-items:center;gap:6px}
+.level-badge{background:rgba(253,239,66,.12);border:1px solid rgba(253,239,66,.25);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--y);font-weight:700}
+.hero-mystery{background:rgba(253,239,66,.08);border:1px dashed rgba(253,239,66,.28);border-radius:14px;padding:12px 14px;margin-top:16px;display:flex;align-items:center;gap:12px}
+.mystery-txt{font-size:12px;color:rgba(255,255,255,.65);line-height:1.5}
+.mystery-txt strong{color:var(--y);font-size:13px;display:block;margin-bottom:2px}
+.mystery-bar{width:100%;height:5px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:8px;overflow:hidden}
+.mystery-fill{height:100%;background:var(--y);border-radius:3px}
+.hero-actions{display:flex;gap:10px;margin-top:16px}
+.ha-btn{flex:1;padding:13px 10px;border-radius:13px;border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
+.ha-btn:hover{opacity:.88}
+.ha-g{background:var(--g);color:white}
+.ha-w{background:rgba(255,255,255,.09);color:white;border:1.5px solid rgba(255,255,255,.18)}
+
+/* ─── STATS STRIP ─── */
+.stat-strip{display:flex;border-bottom:2px solid var(--g)}
+.stat-cell{flex:1;padding:12px 6px;text-align:center;border-right:1px solid var(--border);background:white}
+.stat-cell:last-child{border-right:none}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--g);letter-spacing:.5px}
+.stat-l{font-size:10px;color:var(--soft);font-weight:600;letter-spacing:.5px;margin-top:1px;text-transform:uppercase}
+
+/* ─── SECTIONS ─── */
+.sec{padding:16px 18px}
+.sec-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;color:var(--dark)}
+.sec-link{font-size:12px;color:var(--g);font-weight:700;cursor:pointer}
+
+/* ─── SCAN CTA ─── */
+.scan-cta{background:linear-gradient(135deg,var(--g) 0%,var(--g2) 100%);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;border:none;width:100%;text-align:left;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,133,63,.25);transition:transform .15s,box-shadow .15s}
+.scan-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,133,63,.3)}
+.scan-ico-wrap{width:52px;height:52px;background:var(--y);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.scan-cta-txt h3{font-family:'Bebas Neue',sans-serif;font-size:20px;color:white;letter-spacing:.5px}
+.scan-cta-txt p{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px}
+.scan-arr{margin-left:auto;width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.report-cta{background:white;border:2px solid var(--r);border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;width:100%;text-align:left;transition:background .15s}
+.report-cta:hover{background:var(--r3)}
+.report-ico-wrap{width:52px;height:52px;background:var(--r3);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.report-cta-txt h3{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--r);letter-spacing:.5px}
+.report-cta-txt p{font-size:12px;color:var(--soft);margin-top:2px}
+
+/* ─── MAP ─── */
+.map-wrap{border-radius:18px;overflow:hidden;border:2px solid var(--g);position:relative;box-shadow:var(--shadow)}
+#map-user,#map-sup{height:300px}
+.map-controls-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:white;font-size:10px;padding:4px 10px;border-radius:20px;pointer-events:none;z-index:500;white-space:nowrap;letter-spacing:.5px}
+.map-legend{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.ml-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--soft);font-weight:600}
+.ml-dot{width:10px;height:10px;border-radius:50%}
+
+/* ─── RANKING ─── */
+.rank-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.rank-item:last-child{border-bottom:none}
+.rank-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--soft);width:30px;text-align:center;flex-shrink:0}
+.rank-me{background:linear-gradient(90deg,var(--g3),transparent);border-radius:10px;margin:0 -6px;padding:0 6px}
+.rank-avatar{width:38px;height:38px;border-radius:10px;background:var(--g);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rank-info{flex:1}
+.rank-name{font-size:13px;font-weight:700}
+.rank-sub{font-size:11px;color:var(--soft);margin-top:1px}
+.rank-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--g);letter-spacing:.5px}
+
+/* ─── GOODIES ─── */
+.goodie-scroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.goodie-scroll::-webkit-scrollbar{display:none}
+.goodie-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:14px;min-width:145px;flex-shrink:0;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.goodie-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.goodie-img{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:28px}
+.goodie-name{font-size:13px;font-weight:700;color:var(--dark)}
+.goodie-pts{font-size:12px;color:var(--g);font-weight:700;margin-top:3px}
+.goodie-bar{width:100%;height:5px;background:var(--g3);border-radius:3px;margin-top:8px;overflow:hidden}
+.goodie-fill{height:100%;background:var(--g);border-radius:3px}
+.stand-badge{display:inline-flex;align-items:center;gap:4px;background:var(--y3);border:1.5px solid var(--y2);border-radius:8px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--y2);margin-left:auto;flex-shrink:0}
+
+/* ─── SUPERVISOR ─── */
+.dash-kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.kpi-n{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.5px;line-height:1}
+.kpi-l{font-size:11px;color:var(--soft);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+.bin-card{background:white;border-radius:14px;border:1.5px solid var(--border);padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--shadow);transition:border-color .2s}
+.bin-card.full-alert{border-color:var(--r);background:#FFF8F8}
+.bin-card.mid-alert{border-color:var(--y2)}
+.bin-status{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.s-ok{background:var(--g)}.s-full{background:var(--r);box-shadow:0 0 0 4px rgba(227,30,36,.15)}.s-mid{background:var(--y2)}
+.bin-info{flex:1;min-width:0}
+.bin-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bin-loc{font-size:11px;color:var(--soft);margin-top:2px}
+.bin-full-msg{font-size:11px;color:var(--r);font-weight:700;margin-top:4px;display:flex;align-items:center;gap:4px}
+.dispatch-btn{background:var(--r);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:background .2s}
+.dispatch-btn.sent{background:var(--g);cursor:default}
+.progress-bar{width:100%;height:6px;background:var(--border);border-radius:4px;margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .4s}
+.fill-ok{background:var(--g)}.fill-mid{background:var(--y2)}.fill-full{background:var(--r)}
+.filter-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.filter-tabs::-webkit-scrollbar{display:none}
+.filter-tab{border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid var(--border);background:white;transition:all .15s}
+.filter-tab.on{background:var(--dark);color:white;border-color:var(--dark)}
+
+/* ─── PRESTATAIRE ─── */
+.order-card{background:white;border-radius:16px;border:2px solid var(--r);padding:16px;margin-bottom:12px;position:relative;overflow:hidden;box-shadow:0 3px 12px rgba(227,30,36,.1)}
+.order-card.done{border-color:var(--g);opacity:.72;box-shadow:none}
+.order-tag{position:absolute;top:14px;right:14px;border-radius:8px;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.tag-urgent{background:var(--r3);color:var(--r2)}
+.tag-done{background:var(--g3);color:var(--g2)}
+.order-id{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--r);letter-spacing:.5px;margin-bottom:4px}
+.order-id.done-id{color:var(--g)}
+.order-loc{font-size:13px;font-weight:700;margin-bottom:3px}
+.order-note{font-size:12px;color:var(--soft);line-height:1.5}
+.done-btn{width:100%;background:var(--g);color:white;border:none;border-radius:11px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;cursor:pointer;margin-top:12px;transition:opacity .2s}
+.done-btn:hover{opacity:.88}
+.done-btn:disabled{background:var(--border);color:var(--soft);cursor:default}
+.prest-progress{background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.prest-progress-label{font-size:11px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.prest-bar{height:10px;background:var(--g3);border-radius:6px;overflow:hidden;margin-bottom:6px}
+.prest-fill{height:100%;background:linear-gradient(90deg,var(--g),var(--g2));border-radius:6px;transition:width .5s ease}
+.prest-bar-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:700}
+
+/* ─── MODALS ─── */
+#v-scan-modal,#v-report-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:900;display:none;align-items:flex-end;justify-content:center;padding:0}
+#v-scan-modal.open,#v-report-modal.open{display:flex;animation:backdropIn .2s ease}
+@keyframes backdropIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:white;border-radius:28px 28px 0 0;padding:28px 22px 36px;width:100%;max-width:430px;text-align:center;position:relative;animation:sheetUp .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sheetUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-drag{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-close{position:absolute;top:20px;right:18px;width:30px;height:30px;background:var(--pale);border-radius:9px;border:none;cursor:pointer;font-size:14px;color:var(--soft);display:flex;align-items:center;justify-content:center;font-weight:700}
+.modal-box h3{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.5px;margin-bottom:4px}
+.modal-box p{font-size:13px;color:var(--soft);margin-bottom:18px;line-height:1.55}
+.qr-frame{width:160px;height:160px;border:3px solid var(--g);border-radius:18px;margin:0 auto 16px;position:relative;overflow:hidden;background:var(--g3);display:flex;align-items:center;justify-content:center}
+.qr-scanline{position:absolute;width:100%;height:3px;background:linear-gradient(90deg,transparent,var(--g),transparent);animation:scanY 2s infinite ease-in-out}
+@keyframes scanY{0%{top:0}50%{top:157px}100%{top:0}}
+.modal-confirm{width:100%;background:var(--g);color:white;border:none;border-radius:14px;padding:15px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;cursor:pointer;margin-top:6px;transition:opacity .2s}
+.modal-confirm:hover{opacity:.9}
+.modal-confirm.red{background:var(--r)}
+.modal-info-box{border-radius:12px;padding:11px 14px;margin-bottom:16px;text-align:left}
+.modal-info-g{background:var(--g3);border:1.5px solid var(--g4)}
+.modal-info-r{background:var(--r3);border:1.5px solid #FFC5C7}
+.modal-info-label{font-size:12px;font-weight:700;margin-bottom:3px}
+.modal-info-sub{font-size:11px;opacity:.8}
+.success-check{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.pts-badge{display:inline-flex;align-items:center;gap:6px;background:var(--g3);border:1.5px solid var(--g4);border-radius:20px;padding:8px 18px;font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--g2);margin-bottom:10px;letter-spacing:.5px}
+.photo-box{border:2.5px dashed var(--border);border-radius:14px;padding:30px;text-align:center;cursor:pointer;margin-bottom:16px;transition:border-color .2s,background .2s}
+.photo-box:hover{border-color:var(--r);background:var(--r3)}
+.photo-box-ico{font-size:34px;margin-bottom:8px}
+.photo-box p{font-size:13px;color:var(--soft)}
+.photo-box.captured{border-color:var(--g);background:var(--g3);border-style:solid}
+
+/* ─── ACTIVITY ─── */
+.act-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.act-item:last-child{border-bottom:none}
+.act-ico-wrap{width:40px;height:40px;border-radius:11px;background:var(--g3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.act-info{flex:1}
+.act-name{font-size:13px;font-weight:700}
+.act-time{font-size:11px;color:var(--soft);margin-top:2px}
+.act-pts{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--g);letter-spacing:.5px;flex-shrink:0}
+
+/* ─── STAND CARDS ─── */
+.stand-card{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border)}
+.stand-card:last-child{border-bottom:none}
+.stand-ico{width:38px;height:38px;background:var(--y3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--dark);color:white;padding:11px 22px;border-radius:14px;font-size:13px;font-weight:600;z-index:1000;display:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.toast.show{display:block;animation:toastIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ─── UTILS ─── */
+.hide{display:none!important}
+.divider{height:8px;background:var(--pale)}
+.leaflet-container{font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══════════════ SPLASH ══════════════ -->
+<div id="v-splash">
+  <div class="splash-logo-ring">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="46" stroke="rgba(0,133,63,.4)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="36" stroke="rgba(253,239,66,.35)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="26" stroke="rgba(227,30,36,.3)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="16" fill="var(--g)"/>
+      <path d="M43 55 L47 59 L57 44" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="splash-title">EcoJOJ</div>
+  <div class="splash-sub">Jeux Olympiques de la Jeunesse · Dakar 2026</div>
+
+  <div class="splash-roles-label">Choisissez votre rôle</div>
+
+  <button class="btn-role btn-g" onclick="goRole('spectateur')">
+    <div class="role-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
+    </div>
+    <div class="role-text">
+      <strong>Spectateur / Citoyen</strong>
+      <span>Scanner, trier, gagner des points</span>
+    </div>
+    <div class="qr-pill-sm">QR VERT</div>
+  </button>
+
+  <button class="btn-role btn-y" onclick="goRole('superviseur')">
+    <div class="role-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,.7)" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+    </div>
+    <div class="role-text">
+      <strong>Superviseur</strong>
+      <span>Dashboard temps réel + dispatch</span>
+    </div>
+    <div class="qr-pill-sm">QR JAUNE</div>
+  </button>
+
+  <button class="btn-role btn-r" onclick="goRole('prestataire')">
+    <div class="role-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+    </div>
+    <div class="role-text">
+      <strong>Prestataire / Agent</strong>
+      <span>Recevoir et valider les missions</span>
+    </div>
+    <div class="qr-pill-sm">QR ROUGE</div>
+  </button>
+
+  <div class="splash-flag"><div class="rf-g"></div><div class="rf-y"></div><div class="rf-r"></div></div>
+</div>
+
+<!-- ══════════════ INSCRIPTION ══════════════ -->
+<div id="v-role">
+  <div class="role-header">
+    <h1>EcoJOJ 2026</h1>
+    <p id="role-header-sub">Inscription rapide</p>
+    <div class="role-flag"><div class="rf-g"></div><div class="rf-y"></div><div class="rf-r"></div></div>
+  </div>
+  <div class="role-body">
+    <div id="role-preview-spec" class="hide">
+      <div class="role-preview">
+        <div class="role-preview-head">
+          <div class="role-dot" style="background:var(--g3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg></div>
+          <div class="role-preview-title">Spectateur / Citoyen</div>
+        </div>
+        <div class="role-preview-sub">Scannez les poubelles, signalez les poubelles pleines, accumulez des points et échangez-les contre des goodies JOJ officiels !</div>
+        <div class="qr-pill qr-g">● QR Code Vert</div>
+      </div>
+    </div>
+    <div id="role-preview-sup" class="hide">
+      <div class="role-preview">
+        <div class="role-preview-head">
+          <div class="role-dot" style="background:var(--y3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--y2)" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <div class="role-preview-title">Superviseur</div>
+        </div>
+        <div class="role-preview-sub">Dashboard temps réel : état des poubelles, dispatch prestataires, ranking utilisateurs et statistiques globales du site.</div>
+        <div class="qr-pill qr-y">● QR Code Jaune</div>
+      </div>
+    </div>
+    <div id="role-preview-prest" class="hide">
+      <div class="role-preview">
+        <div class="role-preview-head">
+          <div class="role-dot" style="background:var(--r3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div>
+          <div class="role-preview-title">Prestataire / Agent</div>
+        </div>
+        <div class="role-preview-sub">Recevez vos ordres de mission sur votre téléphone. Intervenez sur les poubelles signalées et confirmez chaque intervention.</div>
+        <div class="qr-pill qr-r">● QR Code Rouge</div>
+      </div>
+    </div>
+
+    <div class="form-field"><label>Prénom &amp; Nom</label><input type="text" id="reg-name" placeholder="ex: Aminata Diallo" value="Aminata Diallo"/></div>
+    <div class="form-field"><label>Téléphone</label><input type="tel" id="reg-phone" placeholder="77 000 00 00" value="77 123 45 67"/></div>
+    <div id="reg-extra-sup" class="hide">
+      <div class="form-field"><label>Matricule superviseur</label><input type="text" placeholder="JOJ-SUP-2026" value="JOJ-SUP-001"/></div>
+    </div>
+    <div id="reg-extra-prest" class="hide">
+      <div class="form-field"><label>Équipe / Zone</label><input type="text" placeholder="Zone A — Stade" value="Zone B — Village Olympique"/></div>
+    </div>
+    <button class="btn-primary" onclick="doRegister()">REJOINDRE ECOJOJ</button>
+    <button class="btn-skip" onclick="doRegister()">Continuer sans s'inscrire (points liés au QR)</button>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="v-app">
+  <div class="topbar">
+    <div class="topbar-logo">EcoJOJ</div>
+    <div class="topbar-center"><div class="topbar-role" id="role-pill">SPECTATEUR</div></div>
+    <div class="topbar-notif" onclick="showToast('🔔 3 nouvelles alertes poubelles !')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <div class="notif-dot"></div>
+    </div>
+  </div>
+  <div class="ticker"><div class="ticker-inner">🌿 JOJ DAKAR 2026 — SÉNÉGAL PROPRE — SCANNEZ, TRIEZ, GAGNEZ DES GOODIES — VILLAGE OLYMPIQUE — STADE LSS — POINT D'ÉCHANGE STAND B3 &amp; D7 — JOJ 2026 🏅</div></div>
+
+  <div class="pages">
+
+    <!-- PAGE HOME SPECTATEUR -->
+    <div class="pg on" id="pg-home">
+      <div class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-label">Mes points JOJ</div>
+        <div class="hero-pts" id="h-pts">1 240</div>
+        <div class="hero-pts-sub">
+          <span id="h-name-disp">Aminata Diallo</span>
+          <div class="level-badge">🥈 Argent</div>
+        </div>
+        <div class="hero-mystery">
+          <div style="font-size:24px">🎁</div>
+          <div class="mystery-txt">
+            <strong>Cadeau mystère à 2 000 pts !</strong>
+            Plus que <span id="pts-to-mystery">760</span> pts — continuez à trier !
+            <div class="mystery-bar"><div class="mystery-fill" id="mystery-fill-bar" style="width:62%"></div></div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="ha-btn ha-g" onclick="openScanModal()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M3 14h.01M7 14h.01M3 18h.01M7 18h.01"/></svg>
+            Scanner
+          </button>
+          <button class="ha-btn ha-w" onclick="openReportModal()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            Signaler
+          </button>
+        </div>
+      </div>
+      <div class="stat-strip">
+        <div class="stat-cell"><div class="stat-n" id="h-depots">23</div><div class="stat-l">Dépôts</div></div>
+        <div class="stat-cell"><div class="stat-n" id="h-rank">7e</div><div class="stat-l">Classmt</div></div>
+        <div class="stat-cell"><div class="stat-n" id="h-signaux">3</div><div class="stat-l">Signalés</div></div>
+      </div>
+      <div class="sec">
+        <button class="scan-cta" onclick="openScanModal()">
+          <div class="scan-ico-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2.3"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M3 14h.01M7 14h.01M3 18h.01M7 18h.01M3 21h.01M7 21h.01"/></svg></div>
+          <div class="scan-cta-txt"><h3>Scanner une poubelle</h3><p>QR vert → dépôt validé → +25 pts</p></div>
+          <div class="scan-arr"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+        <button class="report-cta" onclick="openReportModal()">
+          <div class="report-ico-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg></div>
+          <div class="report-cta-txt"><h3>Signaler une poubelle pleine</h3><p>Photo requise → vérification → +15 pts</p></div>
+          <div class="scan-arr" style="background:var(--r3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg></div>
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="sec">
+        <div class="sec-h"><div class="sec-title">🕐 Activité récente</div></div>
+        <div class="act-item">
+          <div class="act-ico-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          <div class="act-info"><div class="act-name">Poubelle #JOJ-047 — Stade LSS</div><div class="act-time">Il y a 2h · dépôt validé ✓</div></div>
+          <div class="act-pts">+25</div>
+        </div>
+        <div class="act-item">
+          <div class="act-ico-wrap" style="background:var(--r3)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg></div>
+          <div class="act-info"><div class="act-name">Signalement #JOJ-023 — Village</div><div class="act-time">Hier · photo vérifiée ✓</div></div>
+          <div class="act-pts" style="color:var(--r)">+15</div>
+        </div>
+        <div class="act-item">
+          <div class="act-ico-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          <div class="act-info"><div class="act-name">Poubelle #JOJ-031 — Corniche</div><div class="act-time">Il y a 3j · dépôt validé ✓</div></div>
+          <div class="act-pts">+25</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE MAP SPECTATEUR -->
+    <div class="pg" id="pg-map">
+      <div style="padding:14px 18px 10px;background:var(--dark)">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--y);letter-spacing:1px">Carte du site JOJ</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:2px">Poubelles en temps réel · Stands d'échange</div>
+      </div>
+      <div style="padding:14px 18px">
+        <div class="map-wrap" style="position:relative">
+          <div id="map-user"></div>
+          <div class="map-controls-hint" id="map-hint">📍 Pincez pour zoomer · Glissez pour explorer</div>
+        </div>
+        <div class="map-legend">
+          <div class="ml-item"><div class="ml-dot" style="background:var(--g)"></div>Poubelle libre</div>
+          <div class="ml-item"><div class="ml-dot" style="background:var(--y2)"></div>Mi-pleine</div>
+          <div class="ml-item"><div class="ml-dot" style="background:var(--r)"></div>Pleine</div>
+          <div class="ml-item"><div class="ml-dot" style="background:var(--y2);border:2px solid #fff"></div>Stand goodies</div>
+          <div class="ml-item"><div class="ml-dot" style="background:#3B82F6"></div>Vous</div>
+        </div>
+      </div>
+      <div class="sec" style="padding-top:4px">
+        <div class="sec-h"><div class="sec-title">🏅 Stands d'échange</div></div>
+        <div style="background:white;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)">
+          <div class="stand-card">
+            <div class="stand-ico">🏅</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700">Stand B3 — Stade LSS</div><div style="font-size:11px;color:var(--soft);margin-top:2px">120 m de vous · Ouvert 9h–20h</div></div>
+            <div class="stand-badge">GOODIES</div>
+          </div>
+          <div class="stand-card">
+            <div class="stand-ico">🏅</div>
+            <div style="flex:1"><div style="font-size:13px;font-weight:700">Stand D7 — Village Olympique</div><div style="font-size:11px;color:var(--soft);margin-top:2px">340 m de vous · Ouvert 8h–21h</div></div>
+            <div class="stand-badge">GOODIES</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE RANKING -->
+    <div class="pg" id="pg-rank">
+      <div style="background:var(--dark);padding:16px 18px 20px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--y);letter-spacing:1px;margin-bottom:4px">🏆 Classement JOJ Live</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase">Mis à jour en temps réel</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <div style="flex:1;background:rgba(253,239,66,.08);border:1px solid rgba(253,239,66,.15);border-radius:12px;padding:11px;text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--y)">847</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">Participants</div>
+          </div>
+          <div style="flex:1;background:rgba(0,133,63,.12);border:1px solid rgba(0,133,63,.25);border-radius:12px;padding:11px;text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--g)">4 230</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">Dépôts</div>
+          </div>
+          <div style="flex:1;background:rgba(227,30,36,.1);border:1px solid rgba(227,30,36,.2);border-radius:12px;padding:11px;text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--r)">127</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-transform:uppercase">Signaux</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec"><div id="ranking-list"></div></div>
+    </div>
+
+    <!-- PAGE GOODIES -->
+    <div class="pg" id="pg-goodies">
+      <div style="background:var(--dark);padding:16px 18px 20px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--y);letter-spacing:1px">Goodies JOJ 2026</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:2px">Échangez vos points contre du merch officiel</div>
+        <div style="background:rgba(253,239,66,.08);border:1px dashed rgba(253,239,66,.28);border-radius:14px;padding:14px;margin-top:14px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">Mon solde</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--y);letter-spacing:1px;line-height:1" id="g-pts">1 240 pts</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:rgba(255,255,255,.35)">Niveau</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:white">ARGENT 🥈</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec">
+        <div style="background:#FFF8E7;border:1.5px solid var(--y2);border-radius:14px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:20px">📍</span>
+          <div style="font-size:12px;color:var(--y2);font-weight:600;line-height:1.5">Rendez-vous aux stands <strong>B3</strong> ou <strong>D7</strong> pour échanger en personne. Pensez à avoir votre QR code.</div>
+        </div>
+        <div class="sec-h"><div class="sec-title">Boutique officielle</div></div>
+        <div class="goodie-scroll" style="margin-bottom:20px" id="goodie-list"></div>
+        <div style="background:var(--g3);border:1.5px solid var(--g4);border-radius:14px;padding:16px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--g2);letter-spacing:.5px;margin-bottom:6px">🎁 Cadeau mystère — 2 000 pts</div>
+          <div style="font-size:12px;color:var(--g2);line-height:1.55">Plus que <strong id="mystery-remaining">760 pts</strong> pour débloquer une surprise spéciale JOJ 2026 !</div>
+          <div class="progress-bar" style="margin-top:10px"><div class="progress-fill fill-ok" id="mystery-prog" style="width:62%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--g2);font-weight:700">
+            <span id="mystery-curr-pts">1 240 pts</span><span>2 000 pts</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE SUPERVISEUR -->
+    <div class="pg" id="pg-sup">
+      <div style="background:var(--dark);padding:16px 18px 20px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--y);letter-spacing:1px">Dashboard Superviseur</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:2px;margin-top:2px">Temps réel — JOJ Dakar 2026</div>
+      </div>
+      <div class="sec">
+        <div class="dash-kpi">
+          <div class="kpi-card"><div class="kpi-n" style="color:var(--g)">847</div><div class="kpi-l">Utilisateurs actifs</div></div>
+          <div class="kpi-card"><div class="kpi-n" style="color:var(--r)" id="kpi-full">5</div><div class="kpi-l">Poubelles pleines</div></div>
+          <div class="kpi-card"><div class="kpi-n" style="color:var(--y2)">18</div><div class="kpi-l">Prestataires dispo</div></div>
+          <div class="kpi-card"><div class="kpi-n" style="color:var(--mid)">4 230</div><div class="kpi-l">Dépôts aujourd'hui</div></div>
+        </div>
+        <div class="map-wrap" style="margin-bottom:14px;position:relative">
+          <div id="map-sup"></div>
+          <div class="map-controls-hint" id="map-sup-hint">📍 Pincez pour zoomer · Cliquez sur un marqueur</div>
+        </div>
+        <div class="sec-h">
+          <div class="sec-title">État des poubelles</div>
+          <div style="font-size:11px;color:var(--g);font-weight:700;cursor:pointer" onclick="renderBins('all',null)">↺ Rafraîchir</div>
+        </div>
+        <div class="filter-tabs">
+          <div class="filter-tab on" onclick="filterBins('all',this)">Toutes</div>
+          <div class="filter-tab" onclick="filterBins('full',this)">Pleines 🔴</div>
+          <div class="filter-tab" onclick="filterBins('mid',this)">Mi-pleines 🟡</div>
+          <div class="filter-tab" onclick="filterBins('ok',this)">Libres 🟢</div>
+        </div>
+        <div id="bins-list"></div>
+      </div>
+      <div class="sec" style="padding-top:0">
+        <div class="sec-h"><div class="sec-title">🏆 Top utilisateurs</div></div>
+        <div id="sup-ranking-mini"></div>
+      </div>
+    </div>
+
+    <!-- PAGE PRESTATAIRE -->
+    <div class="pg" id="pg-prest">
+      <div style="background:var(--dark);padding:16px 18px 20px">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--y);letter-spacing:1px">Mes missions</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:2px">Zone B — Village Olympique</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <div style="flex:1;background:rgba(227,30,36,.15);border:1px solid rgba(227,30,36,.3);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--r)" id="p-active">3</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">En attente</div>
+          </div>
+          <div style="flex:1;background:rgba(0,133,63,.12);border:1px solid rgba(0,133,63,.25);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--g)" id="p-done">7</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">Terminées</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="prest-progress">
+          <div class="prest-progress-label">Progression journalière</div>
+          <div class="prest-bar"><div class="prest-fill" id="prest-fill-bar" style="width:70%"></div></div>
+          <div class="prest-bar-labels">
+            <span style="color:var(--g)" id="prest-done-count">7 terminées</span>
+            <span style="color:var(--soft)">10 total</span>
+          </div>
+        </div>
+        <div class="sec-h"><div class="sec-title">Ordres de mission</div></div>
+        <div id="orders-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- NAV SPECTATEUR -->
+  <div class="bot-nav" id="bot-nav">
+    <div class="bn-item on" id="bn-home" onclick="showPage('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Accueil</span>
+    </div>
+    <div class="bn-item" id="bn-map" onclick="showPage('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--soft)" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+      <span>Carte</span>
+    </div>
+    <div class="bn-item" id="bn-rank" onclick="showPage('rank')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--soft)" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <span>Ranking</span>
+    </div>
+    <div class="bn-item" id="bn-goodies" onclick="showPage('goodies')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--soft)" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+      <span>Goodies</span>
+    </div>
+  </div>
+
+  <!-- NAV SUPERVISEUR -->
+  <div class="bot-nav hide" id="bot-nav-sup">
+    <div class="bn-item on" id="bs-dash" onclick="showPageSup('sup')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="bn-item" id="bs-map" onclick="showPageSup('map')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--soft)" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+      <span>Carte</span>
+    </div>
+    <div class="bn-item" id="bs-rank" onclick="showPageSup('rank')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--soft)" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+      <span>Ranking</span>
+    </div>
+  </div>
+
+  <!-- NAV PRESTATAIRE -->
+  <div class="bot-nav hide" id="bot-nav-prest">
+    <div class="bn-item on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+      <span style="color:var(--r)">Missions</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL SCAN ══════════════ -->
+<div id="v-scan-modal">
+  <div class="modal-box">
+    <div class="modal-drag"></div>
+    <button class="modal-close" onclick="closeModal('v-scan-modal')">✕</button>
+    <div id="scan-s1">
+      <div style="width:52px;height:52px;background:var(--g3);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M3 14h.01M7 14h.01M3 18h.01M7 18h.01M3 21h.01M7 21h.01"/></svg>
+      </div>
+      <h3>Scanner la poubelle</h3>
+      <p>Pointez votre caméra vers le QR code vert sur la poubelle JOJ</p>
+      <div class="qr-frame" style="margin-bottom:14px">
+        <div class="qr-scanline"></div>
+        <svg width="100" height="100" viewBox="0 0 110 110" fill="none">
+          <rect x="10" y="10" width="34" height="34" rx="3" stroke="rgba(0,133,63,.4)" stroke-width="2" fill="rgba(0,133,63,.06)"/>
+          <rect x="66" y="10" width="34" height="34" rx="3" stroke="rgba(0,133,63,.4)" stroke-width="2" fill="rgba(0,133,63,.06)"/>
+          <rect x="10" y="66" width="34" height="34" rx="3" stroke="rgba(0,133,63,.4)" stroke-width="2" fill="rgba(0,133,63,.06)"/>
+          <rect x="18" y="18" width="18" height="18" rx="2" fill="rgba(0,133,63,.25)"/>
+          <rect x="74" y="18" width="18" height="18" rx="2" fill="rgba(0,133,63,.25)"/>
+          <rect x="18" y="74" width="18" height="18" rx="2" fill="rgba(0,133,63,.25)"/>
+          <rect x="66" y="66" width="10" height="10" rx="1" fill="rgba(253,239,66,.5)"/>
+          <rect x="80" y="66" width="10" height="10" rx="1" fill="rgba(253,239,66,.5)"/>
+          <rect x="66" y="80" width="10" height="10" rx="1" fill="rgba(253,239,66,.5)"/>
+          <rect x="80" y="80" width="10" height="10" rx="1" fill="rgba(253,239,66,.5)"/>
+        </svg>
+        <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 160 160" fill="none">
+          <path d="M16 44L16 16L44 16" stroke="var(--g)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M116 16L144 16L144 44" stroke="var(--g)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M16 116L16 144L44 144" stroke="var(--g)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M144 116L144 144L116 144" stroke="var(--g)" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="modal-info-box modal-info-g" style="margin-bottom:14px">
+        <div class="modal-info-label" style="color:var(--g2)">📍 Poubelle #JOJ-047 détectée</div>
+        <div class="modal-info-sub" style="color:var(--g)">Stade Léopold Sédar Senghor · Libre · +25 pts</div>
+      </div>
+      <button class="modal-confirm" onclick="doScan()">CONFIRMER MON DÉPÔT</button>
+    </div>
+    <div id="scan-s2" style="display:none">
+      <div class="success-check" style="background:var(--g3);border:3px solid var(--g)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--g)" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3>Dépôt validé !</h3>
+      <p>Votre déchet a bien été enregistré. Merci pour le Sénégal propre !</p>
+      <div class="pts-badge">+25 pts JOJ</div>
+      <div style="font-size:12px;color:var(--soft);margin-bottom:16px">Nouveau solde : <strong id="new-pts-disp" style="color:var(--g)">1 265 pts</strong></div>
+      <button class="modal-confirm" onclick="closeModal('v-scan-modal')">CONTINUER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL SIGNALEMENT ══════════════ -->
+<div id="v-report-modal">
+  <div class="modal-box">
+    <div class="modal-drag"></div>
+    <button class="modal-close" onclick="closeModal('v-report-modal')">✕</button>
+    <div id="rep-s1">
+      <div style="width:52px;height:52px;background:var(--r3);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      </div>
+      <h3 style="color:var(--r)">Signaler une poubelle</h3>
+      <p>Prenez une photo de la poubelle pleine pour valider votre signalement et recevoir <strong style="color:var(--g)">+15 pts</strong></p>
+      <div class="photo-box" onclick="doPhotoSim()" id="photo-area">
+        <div class="photo-box-ico">📸</div>
+        <p>Appuyez pour prendre une photo</p>
+      </div>
+      <div class="modal-info-box modal-info-r" style="margin-bottom:14px">
+        <div class="modal-info-label" style="color:var(--r2)">📍 Poubelle #JOJ-023 identifiée</div>
+        <div class="modal-info-sub" style="color:var(--r)">Village Olympique · Signalement en cours</div>
+      </div>
+      <button class="modal-confirm red" id="rep-confirm-btn" style="opacity:.4;cursor:default" disabled onclick="doReport()">ENVOYER LE SIGNALEMENT</button>
+    </div>
+    <div id="rep-s2" style="display:none">
+      <div class="success-check" style="background:var(--r3);border:3px solid var(--r)"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--r)" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h3 style="color:var(--r)">Signalement envoyé !</h3>
+      <p>Un prestataire sera dispatché rapidement. Merci pour votre contribution !</p>
+      <div class="pts-badge" style="background:var(--r3);border-color:#FFC5C7;color:var(--r2)">+15 pts JOJ</div>
+      <div style="font-size:12px;color:var(--soft);margin-bottom:16px">Nouveau solde : <strong id="new-pts-rep" style="color:var(--g)">1 255 pts</strong></div>
+      <button class="modal-confirm" onclick="closeModal('v-report-modal')">CONTINUER</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══ DATA ═══ */
+const DB = {
+  currentRole: 'spectateur',
+  currentUser: { name:'Aminata Diallo', pts:1240, depots:23, rang:7, signaux:3 },
+  bins: [
+    {id:'JOJ-001',lat:14.6937,lng:-17.4441,name:'Stade LSS — Entrée Nord',pct:85,status:'full'},
+    {id:'JOJ-002',lat:14.6920,lng:-17.4461,name:'Village Olympique — Zone A',pct:42,status:'mid'},
+    {id:'JOJ-003',lat:14.6960,lng:-17.4410,name:'Pl. Indépendance',pct:15,status:'ok'},
+    {id:'JOJ-004',lat:14.6900,lng:-17.4490,name:'UCAD — Porte principale',pct:92,status:'full'},
+    {id:'JOJ-005',lat:14.6870,lng:-17.4380,name:'Parc de Hann',pct:30,status:'ok'},
+    {id:'JOJ-006',lat:14.6950,lng:-17.4550,name:'Corniche Ouest',pct:78,status:'full'},
+    {id:'JOJ-007',lat:14.6985,lng:-17.4470,name:'Centre Sportif Bel-Air',pct:55,status:'mid'},
+    {id:'JOJ-008',lat:14.6910,lng:-17.4520,name:'Village Olympique — Zone B',pct:95,status:'full'},
+  ],
+  stands: [
+    {lat:14.6940,lng:-17.4430,name:'Stand B3 — Goodies JOJ'},
+    {lat:14.6915,lng:-17.4480,name:'Stand D7 — Goodies JOJ'},
+  ],
+  ranking: [
+    {pos:1,name:'Moussa Diallo',pts:3840,depots:154,avatar:'😎'},
+    {pos:2,name:'Fatou Ndiaye',pts:3210,depots:128,avatar:'🌟'},
+    {pos:3,name:'Ibrahima Sow',pts:2980,depots:119,avatar:'🔥'},
+    {pos:4,name:'Mariama Ba',pts:2740,depots:110,avatar:'💪'},
+    {pos:5,name:'Ousmane Fall',pts:2310,depots:92,avatar:'✨'},
+    {pos:6,name:'Aïda Diop',pts:1950,depots:78,avatar:'🌸'},
+    {pos:7,name:'Aminata Diallo',pts:1240,depots:50,avatar:'👩🏾',me:true},
+    {pos:8,name:'Cheikh Kane',pts:1180,depots:47,avatar:'🏃'},
+    {pos:9,name:'Rokhaya Sy',pts:920,depots:37,avatar:'🌿'},
+    {pos:10,name:'Pape Guèye',pts:750,depots:30,avatar:'🎯'},
+  ],
+  orders: [
+    {id:'ORD-001',bin:'#JOJ-001',loc:'Stade LSS — Entrée Nord',note:'Pleine à 85% — signalée par 3 utilisateurs',urgent:true,done:false},
+    {id:'ORD-002',bin:'#JOJ-004',loc:'UCAD — Porte principale',note:'Pleine à 92% — priorité haute',urgent:true,done:false},
+    {id:'ORD-003',bin:'#JOJ-006',loc:'Corniche Ouest',note:'Pleine à 78%',urgent:false,done:false},
+    {id:'ORD-004',bin:'#JOJ-011',loc:'Stade LSS — Sortie Sud',note:'Complété il y a 1h',urgent:false,done:true},
+    {id:'ORD-005',bin:'#JOJ-015',loc:'Village Olympique — Rue 3',note:'Complété ce matin',urgent:false,done:true},
+  ],
+  goodies: [
+    {ico:'👕',bg:'#E8F5FF',name:'T-shirt JOJ',pts:800,stock:1.0},
+    {ico:'🧢',bg:'#F0EEFF',name:'Casquette JOJ',pts:600,stock:1.0},
+    {ico:'🎒',bg:'#FFF8E7',name:'Sac à dos JOJ',pts:1500,stock:0.83},
+    {ico:'🎽',bg:'#FFF0E8',name:'Jersey officiel',pts:2000,stock:0.62},
+    {ico:'🏅',bg:'#EEF5EE',name:'Médaille souvenir',pts:3000,stock:0.41},
+    {ico:'🪀',bg:'#E8FFF5',name:'Kit sportif complet',pts:4000,stock:0.31},
+  ],
+  dispatched: {}
+};
+
+let userPts = 1240;
+let mapUserInit = false;
+let mapSupInit = false;
+let currentFilter = 'all';
+let mapUserObj = null;
+let mapSupObj = null;
+
+/* ═══ NAV ═══ */
+function goRole(role) {
+  DB.currentRole = role;
+  document.getElementById('v-splash').style.display = 'none';
+  const rv = document.getElementById('v-role');
+  rv.style.display = 'flex';
+  ['spec','sup','prest'].forEach(r => document.getElementById('role-preview-'+r).classList.add('hide'));
+  const map = {spectateur:'spec',superviseur:'sup',prestataire:'prest'};
+  document.getElementById('role-preview-'+map[role]).classList.remove('hide');
+  document.getElementById('role-header-sub').textContent =
+    role==='spectateur' ? 'Inscription Spectateur / Citoyen' :
+    role==='superviseur' ? 'Inscription Superviseur' : 'Inscription Prestataire';
+  document.getElementById('reg-extra-sup').classList.toggle('hide', role!=='superviseur');
+  document.getElementById('reg-extra-prest').classList.toggle('hide', role!=='prestataire');
+}
+
+function doRegister() {
+  document.getElementById('v-role').style.display = 'none';
+  const app = document.getElementById('v-app');
+  app.style.display = 'flex';
+  setupRole(DB.currentRole);
+}
+
+function setupRole(role) {
+  const pill = document.getElementById('role-pill');
+  pill.textContent = role.toUpperCase();
+  pill.className = 'topbar-role role-'+role;
+  ['bot-nav','bot-nav-sup','bot-nav-prest'].forEach(id => document.getElementById(id).classList.add('hide'));
+
+  if(role === 'spectateur') {
+    document.getElementById('bot-nav').classList.remove('hide');
+    renderRanking(); renderGoodies();
+    showPage('home');
+  } else if(role === 'superviseur') {
+    document.getElementById('bot-nav-sup').classList.remove('hide');
+    ['pg-home','pg-map','pg-rank','pg-goodies','pg-prest'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.style.display='none';
+    });
+    const sup = document.getElementById('pg-sup');
+    sup.classList.add('on'); sup.style.display='block';
+    renderRanking(); renderBins('all',null);
+    setTimeout(() => initMapSup(), 250);
+  } else {
+    document.getElementById('bot-nav-prest').classList.remove('hide');
+    ['pg-home','pg-map','pg-rank','pg-goodies','pg-sup'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.style.display='none';
+    });
+    const prest = document.getElementById('pg-prest');
+    prest.classList.add('on'); prest.style.display='block';
+    renderOrders();
+  }
+}
+
+function showPage(name) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  ['home','map','rank','goodies'].forEach(n => {
+    const el = document.getElementById('bn-'+n);
+    if(el) {
+      el.classList.toggle('on', n===name);
+      const svg = el.querySelector('svg');
+      if(svg) svg.setAttribute('stroke', n===name ? 'var(--g)' : 'var(--soft)');
+    }
+  });
+  if(name==='map') {
+    setTimeout(() => {
+      if(!mapUserInit) initMapUser();
+      else if(mapUserObj) mapUserObj.invalidateSize();
+      const hint = document.getElementById('map-hint');
+      if(hint) { hint.style.display='block'; setTimeout(()=>hint.style.display='none',3000); }
+    }, 100);
+  }
+}
+
+function showPageSup(name) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  if(name==='sup') document.getElementById('pg-sup').classList.add('on');
+  else if(name==='map') { document.getElementById('pg-map').classList.add('on'); setTimeout(()=>{ if(!mapUserInit) initMapUser(); else if(mapUserObj) mapUserObj.invalidateSize(); },100); }
+  else if(name==='rank') document.getElementById('pg-rank').classList.add('on');
+  ['dash','map','rank'].forEach(n => {
+    const el = document.getElementById('bs-'+n);
+    if(el) {
+      el.classList.toggle('on', n===name);
+      const svg = el.querySelector('svg');
+      if(svg) svg.setAttribute('stroke', n===name ? 'var(--g)' : 'var(--soft)');
+    }
+  });
+}
+
+/* ═══ MAPS — fully interactive ═══ */
+function makeBinIcon(color, pct) {
+  return L.divIcon({
+    html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+        <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+      </svg>
+    </div>`,
+    className: '', iconSize:[28,28], iconAnchor:[14,14]
+  });
+}
+
+function initMapUser() {
+  if(mapUserInit) return;
+  mapUserInit = true;
+  const m = L.map('map-user', {
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true,
+    touchZoom: true,
+    doubleClickZoom: true,
+    boxZoom: true
+  }).setView([14.6930,-17.4450], 14);
+  mapUserObj = m;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'}).addTo(m);
+  // user location
+  const userIcon = L.divIcon({html:'<div style="width:16px;height:16px;background:#3B82F6;border:3px solid white;border-radius:50%;box-shadow:0 0 0 6px rgba(59,130,246,.2)"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]});
+  L.marker([14.6930,-17.4450],{icon:userIcon}).addTo(m).bindPopup('<strong>📍 Vous êtes ici</strong>');
+  // bins
+  DB.bins.forEach(b => {
+    const c = b.status==='full' ? '#E31E24' : b.status==='mid' ? '#C9BB00' : '#00853F';
+    const statusLabel = b.status==='full' ? '<span style="color:#E31E24;font-weight:700">⚠️ Pleine — signalement possible</span>' : b.status==='mid' ? '<span style="color:#C9BB00;font-weight:700">🟡 Mi-pleine</span>' : '<span style="color:#00853F;font-weight:700">✅ Libre — +25 pts</span>';
+    const pop = `<div style="font-family:sans-serif;min-width:160px">
+      <strong>#${b.id}</strong><br>
+      <span style="font-size:12px;color:#555">${b.name}</span><br>
+      <div style="margin:6px 0">${statusLabel}</div>
+      <div style="background:#eee;height:5px;border-radius:3px"><div style="width:${b.pct}%;height:100%;background:${c};border-radius:3px"></div></div>
+      <div style="font-size:11px;color:#888;margin-top:4px">${b.pct}% remplie</div>
+    </div>`;
+    L.marker([b.lat,b.lng],{icon:makeBinIcon(c,b.pct)}).addTo(m).bindPopup(pop,{maxWidth:200});
+  });
+  // stands
+  DB.stands.forEach(s => {
+    const standIcon = L.divIcon({html:`<div style="background:#C9BB00;width:30px;height:30px;border-radius:50%;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:14px">🏅</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
+    L.marker([s.lat,s.lng],{icon:standIcon}).addTo(m).bindPopup(`<strong>${s.name}</strong><br><span style="font-size:12px">Échange de points contre goodies</span>`);
+  });
+  // nearest bin highlight
+  L.circle([14.6937,-17.4441],{color:'#00853F',fillColor:'#00853F',fillOpacity:.08,radius:80,weight:2,dashArray:'6 4'}).addTo(m);
+}
+
+function initMapSup() {
+  if(mapSupInit) return;
+  mapSupInit = true;
+  const m = L.map('map-sup', {
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true,
+    touchZoom: true,
+    doubleClickZoom: true
+  }).setView([14.6930,-17.4450], 14);
+  mapSupObj = m;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'}).addTo(m);
+  DB.bins.forEach(b => {
+    const c = b.status==='full' ? '#E31E24' : b.status==='mid' ? '#C9BB00' : '#00853F';
+    const icon = L.divIcon({
+      html:`<div style="background:${c};color:white;border-radius:10px;padding:3px 8px;font-size:11px;font-weight:700;white-space:nowrap;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.28);cursor:pointer">${b.pct}%</div>`,
+      className:'',iconAnchor:[20,12]
+    });
+    const dispBtn = DB.dispatched[b.id] ? '✓ Dispatché' : b.status!=='ok' ? '<a href="#" onclick="return false;" id="pop-dispatch-'+b.id+'" style="background:#E31E24;color:white;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;display:inline-block;margin-top:6px;text-decoration:none">Dispatcher →</a>' : '';
+    const pop = `<div style="font-family:sans-serif;min-width:160px">
+      <strong>#${b.id}</strong><br>
+      <span style="font-size:12px;color:#555">${b.name}</span><br>
+      <div style="background:#eee;height:5px;border-radius:3px;margin:6px 0"><div style="width:${b.pct}%;height:100%;background:${c};border-radius:3px"></div></div>
+      <span style="font-size:11px;color:#888">${b.pct}% remplie</span><br>
+      ${dispBtn}
+    </div>`;
+    const marker = L.marker([b.lat,b.lng],{icon}).addTo(m);
+    marker.bindPopup(pop,{maxWidth:210});
+    marker.on('popupopen', () => {
+      const btn = document.getElementById('pop-dispatch-'+b.id);
+      if(btn) btn.addEventListener('click', () => {
+        DB.dispatched[b.id]=true;
+        showToast('✓ Prestataire dispatché pour #'+b.id);
+        marker.closePopup();
+        renderBins(currentFilter,null);
+      });
+    });
+  });
+  const hint = document.getElementById('map-sup-hint');
+  if(hint) setTimeout(()=>hint.style.display='none',3000);
+}
+
+/* ═══ RANKING ═══ */
+function renderRanking() {
+  const list = document.getElementById('ranking-list');
+  if(list) list.innerHTML = DB.ranking.map(u=>`
+    <div class="rank-item ${u.me?'rank-me':''}">
+      <div class="rank-num" style="color:${u.pos===1?'var(--y2)':u.pos===2?'var(--soft)':u.pos===3?'var(--r2)':'var(--soft)'}">${u.pos===1?'🥇':u.pos===2?'🥈':u.pos===3?'🥉':u.pos}</div>
+      <div class="rank-avatar">${u.avatar}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.name}${u.me?' <span style="font-size:10px;background:var(--g);color:white;border-radius:5px;padding:1px 5px">MOI</span>':''}</div>
+        <div class="rank-sub">${u.depots} dépôts</div>
+      </div>
+      <div class="rank-pts">${u.pts.toLocaleString('fr-FR')}</div>
+    </div>`).join('');
+  const mini = document.getElementById('sup-ranking-mini');
+  if(mini) mini.innerHTML = DB.ranking.slice(0,5).map(u=>`
+    <div class="rank-item">
+      <div class="rank-num" style="color:${u.pos===1?'var(--y2)':u.pos===2?'var(--soft)':u.pos===3?'var(--r2)':'var(--soft)'}">${u.pos===1?'🥇':u.pos===2?'🥈':u.pos===3?'🥉':u.pos}</div>
+      <div class="rank-avatar">${u.avatar}</div>
+      <div class="rank-info"><div class="rank-name">${u.name}</div><div class="rank-sub">${u.depots} dépôts</div></div>
+      <div class="rank-pts">${u.pts.toLocaleString('fr-FR')}</div>
+    </div>`).join('');
+}
+
+/* ═══ GOODIES ═══ */
+function renderGoodies() {
+  const list = document.getElementById('goodie-list');
+  if(!list) return;
+  list.innerHTML = DB.goodies.map(g => {
+    const canAfford = userPts >= g.pts;
+    const diff = g.pts - userPts;
+    return `<div class="goodie-card">
+      <div class="goodie-img" style="background:${g.bg}">${g.ico}</div>
+      <div class="goodie-name">${g.name}</div>
+      <div class="goodie-pts">${g.pts.toLocaleString('fr-FR')} pts</div>
+      <div class="goodie-bar"><div class="goodie-fill" style="width:${Math.min(100,userPts/g.pts*100)}%"></div></div>
+      <button style="width:100%;margin-top:10px;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:${canAfford?'pointer':'default'};background:${canAfford?'var(--g)':'var(--border)'};color:${canAfford?'white':'var(--soft)'}"
+        onclick="${canAfford?"showToast('✅ '+`${g.ico} ${g.name}` + ' réservé !')":''}">${canAfford ? 'Réserver' : diff.toLocaleString('fr-FR')+' pts manquants'}</button>
+    </div>`;
+  }).join('');
+}
+
+/* ═══ BINS SUPERVISEUR ═══ */
+function renderBins(filter, tabEl) {
+  if(filter !== null) currentFilter = filter;
+  if(tabEl) {
+    document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('on'));
+    tabEl.classList.add('on');
+  }
+  const list = document.getElementById('bins-list');
+  if(!list) return;
+  const bins = DB.bins.filter(b => currentFilter==='all' || b.status===currentFilter);
+  if(bins.length===0){ list.innerHTML=`<div style="text-align:center;padding:24px;color:var(--soft);font-size:13px">Aucune poubelle dans cette catégorie</div>`; return; }
+  list.innerHTML = bins.map(b => {
+    const fc = b.status==='full'?'fill-full':b.status==='mid'?'fill-mid':'fill-ok';
+    const sc = b.status==='full'?'s-full':b.status==='mid'?'s-mid':'s-ok';
+    const label = b.status==='full'?'PLEINE':b.status==='mid'?'MI-PLEINE':'LIBRE';
+    const disp = DB.dispatched[b.id];
+    return `<div class="bin-card ${b.status==='full'?'full-alert':b.status==='mid'?'mid-alert':''}">
+      <div class="bin-status ${sc}"></div>
+      <div class="bin-info">
+        <div class="bin-name">#${b.id} — ${b.name}</div>
+        <div class="bin-loc">${label} · ${b.pct}% remplie</div>
+        ${b.status==='full'?`<div class="bin-full-msg">⚠️ Intervention requise</div>`:''}
+        <div class="progress-bar"><div class="progress-fill ${fc}" style="width:${b.pct}%"></div></div>
+      </div>
+      ${b.status!=='ok'?`<button class="dispatch-btn ${disp?'sent':''}" ${disp?'disabled':''} onclick="dispatchBin('${b.id}',this)">${disp?'✓ Envoyé':'Dispatcher'}</button>`:''}
+    </div>`;
+  }).join('');
+  // update KPI
+  const fullCount = DB.bins.filter(b=>b.status==='full').length;
+  const kpi = document.getElementById('kpi-full');
+  if(kpi) kpi.textContent = fullCount;
+}
+
+function filterBins(f, el) { renderBins(f, el); }
+
+function dispatchBin(id, btn) {
+  DB.dispatched[id] = true;
+  btn.textContent = '✓ Envoyé';
+  btn.classList.add('sent');
+  btn.disabled = true;
+  showToast('✓ Prestataire dispatché — #'+id);
+  setTimeout(()=>renderBins(currentFilter,null), 300);
+}
+
+/* ═══ ORDERS PRESTATAIRE ═══ */
+function renderOrders() {
+  const list = document.getElementById('orders-list');
+  if(!list) return;
+  list.innerHTML = DB.orders.map((o,i)=>`
+    <div class="order-card ${o.done?'done':''}">
+      <div class="order-tag ${o.done?'tag-done':'tag-urgent'}">${o.done?'✓ TERMINÉ':'URGENT'}</div>
+      <div class="order-id ${o.done?'done-id':''}">MISSION ${o.id}</div>
+      <div class="order-loc">📍 ${o.bin} — ${o.loc}</div>
+      <div class="order-note">${o.note}</div>
+      ${!o.done?`<button class="done-btn" onclick="markDone(${i})">MARQUER TERMINÉ ✓</button>`:'<div style="font-size:12px;color:var(--g);font-weight:700;margin-top:8px;display:flex;align-items:center;gap:4px"><span>✓</span> Mission accomplie</div>'}
+    </div>`).join('');
+  updatePrestProgress();
+}
+
+function markDone(i) {
+  DB.orders[i].done = true;
+  showToast('✅ Mission '+DB.orders[i].id+' terminée !');
+  setTimeout(renderOrders, 350);
+}
+
+function updatePrestProgress() {
+  const done = DB.orders.filter(o=>o.done).length;
+  const active = DB.orders.filter(o=>!o.done).length;
+  const total = DB.orders.length;
+  const pEl = document.getElementById('p-done');
+  const aEl = document.getElementById('p-active');
+  const bar = document.getElementById('prest-fill-bar');
+  const cnt = document.getElementById('prest-done-count');
+  if(pEl) pEl.textContent = done;
+  if(aEl) aEl.textContent = active;
+  if(bar) bar.style.width = Math.round(done/total*100)+'%';
+  if(cnt) cnt.textContent = done+' terminée'+(done>1?'s':'');
+}
+
+/* ═══ MODALS ═══ */
+function openScanModal() {
+  const m = document.getElementById('v-scan-modal');
+  m.classList.add('open'); m.style.display='flex';
+  document.getElementById('scan-s1').style.display='block';
+  document.getElementById('scan-s2').style.display='none';
+}
+function openReportModal() {
+  const m = document.getElementById('v-report-modal');
+  m.classList.add('open'); m.style.display='flex';
+  document.getElementById('rep-s1').style.display='block';
+  document.getElementById('rep-s2').style.display='none';
+  const area = document.getElementById('photo-area');
+  area.className='photo-box';
+  area.innerHTML='<div class="photo-box-ico">📸</div><p>Appuyez pour prendre une photo</p>';
+  const btn = document.getElementById('rep-confirm-btn');
+  btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='default';
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('open');
+  el.style.display='none';
+}
+function doPhotoSim() {
+  const area = document.getElementById('photo-area');
+  area.className='photo-box captured';
+  area.innerHTML=`<div style="text-align:center"><div style="font-size:36px;margin-bottom:8px">🗑️</div><div style="font-size:13px;color:var(--g);font-weight:700">✓ Photo capturée</div><div style="font-size:11px;color:var(--soft);margin-top:4px">Poubelle #JOJ-023 — Village Olympique</div></div>`;
+  const btn = document.getElementById('rep-confirm-btn');
+  btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer';
+}
+function doScan() {
+  userPts += 25;
+  document.getElementById('new-pts-disp').textContent = userPts.toLocaleString('fr-FR')+' pts';
+  document.getElementById('scan-s1').style.display='none';
+  document.getElementById('scan-s2').style.display='block';
+  updateUI();
+}
+function doReport() {
+  userPts += 15;
+  document.getElementById('new-pts-rep').textContent = userPts.toLocaleString('fr-FR')+' pts';
+  document.getElementById('rep-s1').style.display='none';
+  document.getElementById('rep-s2').style.display='block';
+  const si = parseInt(document.getElementById('h-signaux').textContent);
+  document.getElementById('h-signaux').textContent = si+1;
+  updateUI();
+}
+function updateUI() {
+  const fmt = userPts.toLocaleString('fr-FR');
+  document.getElementById('h-pts').textContent = fmt;
+  document.getElementById('g-pts').textContent = fmt+' pts';
+  const diff = Math.max(0, 2000-userPts);
+  const el = document.getElementById('pts-to-mystery');
+  if(el) el.textContent = diff.toLocaleString('fr-FR');
+  const pct = Math.min(100, Math.round(userPts/2000*100));
+  const bar = document.getElementById('mystery-fill-bar');
+  if(bar) bar.style.width = pct+'%';
+  const mp = document.getElementById('mystery-prog');
+  if(mp) mp.style.width = pct+'%';
+  const mr = document.getElementById('mystery-remaining');
+  if(mr) mr.textContent = diff.toLocaleString('fr-FR')+' pts';
+  const mc = document.getElementById('mystery-curr-pts');
+  if(mc) mc.textContent = fmt+' pts';
+  renderGoodies();
+}
+
+/* ═══ TOAST ═══ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+/* ═══ CLOSE ON BG TAP ═══ */
+document.getElementById('v-scan-modal').addEventListener('click',function(e){if(e.target===this)closeModal('v-scan-modal')});
+document.getElementById('v-report-modal').addEventListener('click',function(e){if(e.target===this)closeModal('v-report-modal')});
+</script>
+</body>
+</html>
